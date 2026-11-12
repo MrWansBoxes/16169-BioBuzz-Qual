@@ -90,6 +90,7 @@ public class CameraBenchTest extends OpMode {
         if (cameraControlsRead) {
             telemetry.addData("Exposure / gain", "%d ms (%d-%d) / %d (%d-%d)",
                     exposureMs, minExposureMs, maxExposureMs, gain, minGain, maxGain);
+            telemetry.addLine("Copy good values into TurretConstants.EXPOSURE_MS / GAIN.");
         }
         telemetry.addData("Alliance (X blue / B red)", tracker.alliance());
 

@@ -21,7 +21,7 @@ import java.util.function.Supplier;
  * Robot configuration (Control Hub + Expansion Hub; every motor is a goBILDA bare motor with encoder, every
  * servo an Axon Mini). The ports are a proposal; only the names matter to the code.
  * <pre>
- *   Control Hub   motor 0-3   frontLeft, backLeft, frontRight, backRight      (Pedro drivetrain)
+ *   Control Hub   motor 0-3   lf, lr, rf, rr                                   (Pedro drivetrain)
  *                 servo 0-3   turretServoA, turretServoB, cameraTilt, gate
  *                 analog 0-1  turretFeedback (servo A's 4th wire), cameraTiltFeedback
  *                 I2C bus 1   pinpoint                                         (goBILDA Pinpoint)

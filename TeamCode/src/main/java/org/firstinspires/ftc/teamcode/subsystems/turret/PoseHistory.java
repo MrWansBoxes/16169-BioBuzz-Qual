@@ -6,14 +6,14 @@ import com.pedropathing.utils.Angle;
 /**
  * Ring buffer of (time, robot pose, turret angle, camera pitch) samples. Camera frames are ~50-100 ms old by the
  * time we process them, so a detection has to be combined with where the robot, turret and camera tilt were when
- * the frame was captured, not where they are now.
+ * the frame was captured, not where they are now. Also used by the POLLEN camera (turret and pitch left at 0).
  */
-class PoseHistory {
-    static final class Sample {
-        final long nanos;
-        final Pose pose;
-        final double turretRad;
-        final double cameraPitchRad;
+public class PoseHistory {
+    public static final class Sample {
+        public final long nanos;
+        public final Pose pose;
+        public final double turretRad;
+        public final double cameraPitchRad;
 
         Sample(long nanos, Pose pose, double turretRad, double cameraPitchRad) {
             this.nanos = nanos;
@@ -27,11 +27,11 @@ class PoseHistory {
     private int head = -1;
     private int size = 0;
 
-    PoseHistory(int capacity) {
+    public PoseHistory(int capacity) {
         buffer = new Sample[capacity];
     }
 
-    void add(long nanos, Pose pose, double turretRad, double cameraPitchRad) {
+    public void add(long nanos, Pose pose, double turretRad, double cameraPitchRad) {
         head = (head + 1) % buffer.length;
         buffer[head] = new Sample(nanos, pose, turretRad, cameraPitchRad);
         size = Math.min(size + 1, buffer.length);
@@ -47,7 +47,7 @@ class PoseHistory {
     }
 
     /** Interpolated sample at {@code nanos}, clamped to the oldest/newest stored sample. */
-    Sample at(long nanos) {
+    public Sample at(long nanos) {
         if (size == 0) return null;
         Sample newer = buffer[head];
         if (nanos >= newer.nanos) return newer;

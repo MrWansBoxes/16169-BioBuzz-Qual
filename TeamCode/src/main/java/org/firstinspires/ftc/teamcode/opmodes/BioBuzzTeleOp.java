@@ -34,9 +34,10 @@ import org.firstinspires.ftc.teamcode.subsystems.turret.TurretCommands;
  *   A = turret track, Y = turret forward, dpad left/right = turret trim, dpad up/down = override raised CELL
  *   (up = SCORING / far side, down = AUDIENCE side), left stick button = lower / raise the dropdown.
  */
-@TeleOp(name = BioBuzzTeleOp.NAME)
+@TeleOp
 public class BioBuzzTeleOp extends OpMode {
-    public static final String NAME = "BioBuzz TeleOp";
+    /** Driver Station name. The bare @TeleOp uses the class name, so the autos preselect this. */
+    public static final String NAME = "BioBuzzTeleOp";
     public static int BALLS_PER_VOLLEY = 4;
 
     private Follower follower;

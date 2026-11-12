@@ -41,7 +41,7 @@ public class MotorServoTest extends OpMode {
     public static double SWEEP_SEC = 3.0;
     /** Turret travel either side of center when one turret servo is tested alone. */
     public static double SOLO_TURRET_DEG = 15.0;
-    /** Share of the dropdown's travel when one spool servo is tested alone. */
+    /** Share of the dropdown's travel when one dropdown servo is tested alone. */
     public static double SOLO_DROPDOWN_FRACTION = 0.25;
 
     private final List<TestItem> items = new ArrayList<>();

@@ -10,7 +10,8 @@ package org.firstinspires.ftc.teamcode.subsystems.turret;
  *  - Camera pitch: 0 = lens level, positive = tilted up.
  *
  * Geometry marked "CAD" comes from "full robot assembly.step" (2026-10-27). The robot is not built yet and the
- * CAD will change, so re-measure those values on the real robot.
+ * CAD will change (the turret is being redesigned), so re-measure those values on the real robot. Heights are from
+ * the tiles: CAD z = 0 is the bottom of the frame, about 0.31 in. above the floor.
  */
 public final class TurretConstants {
     private TurretConstants() {}
@@ -81,10 +82,10 @@ public final class TurretConstants {
     public static double TILT_MAX_DEG_PER_SEC = 400.0;
     /**
      * Tilt axis in the turret frame. CAD: the servo shaft is horizontal (left-right), 0.64 in. ahead of the turret
-     * pivot and 10.06 in. above the floor, in line with the lens 3.33 in. left of the pivot.
+     * pivot and 10.37 in. above the floor, in line with the lens 3.33 in. left of the pivot.
      */
     public static double TILT_AXIS_FORWARD = 0.64;
-    public static double TILT_AXIS_HEIGHT = 10.06;
+    public static double TILT_AXIS_HEIGHT = 10.37;
     public static double CAMERA_LEFT = 3.33;
     /**
      * Lens position relative to the tilt axis, measured in the camera's own frame: along the lens direction and
@@ -102,6 +103,13 @@ public final class TurretConstants {
     public static int CAMERA_HEIGHT_PX = 480;
     /** AprilTag decimation: higher = faster but shorter detection range. */
     public static float APRILTAG_DECIMATION = 2.0f;
+    /**
+     * Manual exposure (ms) so tags still detect while the robot moves. Find it with Camera Bench Test (dpad
+     * up/down). 0 = leave the camera on auto exposure.
+     */
+    public static int EXPOSURE_MS = 0;
+    /** Manual gain to go with EXPOSURE_MS (Camera Bench Test dpad left/right). -1 = leave it as it is. */
+    public static int GAIN = -1;
     /** Used if the frame timestamp looks wrong. */
     public static double DEFAULT_CAMERA_LATENCY_SEC = 0.05;
     /** Ignore detections farther than this (horizontal); pose noise grows quickly with range. */

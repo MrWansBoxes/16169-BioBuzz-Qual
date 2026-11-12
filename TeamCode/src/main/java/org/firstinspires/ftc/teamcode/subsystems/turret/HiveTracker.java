@@ -8,6 +8,8 @@ import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Alliance;
@@ -19,6 +21,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Knows where our alliance's raised CELL is in field coordinates.
@@ -79,6 +82,9 @@ public class HiveTracker {
     private int lastPercentFound = 0;
     private List<AprilTagDetection> latestDetections = new ArrayList<>();
     private PoseHistory stationaryHistory;
+    /** 0 = waiting for the stream, 1 = manual mode requested (at cameraModeNanos), 2 = done. */
+    private int cameraSettingsStep = 0;
+    private long cameraModeNanos = 0;
 
     /**
      * @param liveViewContainerId 0 for no preview, {@link #DEFAULT_LIVE_VIEW} for the normal preview. With two
@@ -158,6 +164,7 @@ public class HiveTracker {
 
     /** Process any new camera frame. Call once per loop, after the newest pose was added to {@code history}. */
     void update(PoseHistory history) {
+        applyCameraSettings();
         List<AprilTagDetection> detections = processor.getFreshDetections();
         if (detections == null) return;
         latestDetections = detections;
@@ -170,6 +177,34 @@ public class HiveTracker {
                 handleSighting(cell, cluster, history);
             }
         }
+    }
+
+    /**
+     * Apply EXPOSURE_MS / GAIN once the camera streams. The camera needs a moment after switching to manual mode
+     * before it takes an exposure value, so this spreads over two loops instead of sleeping.
+     */
+    private void applyCameraSettings() {
+        if (cameraSettingsStep == 2 || portal.getCameraState() != VisionPortal.CameraState.STREAMING) return;
+        if (EXPOSURE_MS <= 0) {
+            cameraSettingsStep = 2;
+            return;
+        }
+        ExposureControl exposure = portal.getCameraControl(ExposureControl.class);
+        if (exposure == null) {
+            cameraSettingsStep = 2;
+            return;
+        }
+        if (cameraSettingsStep == 0) {
+            if (exposure.getMode() != ExposureControl.Mode.Manual) exposure.setMode(ExposureControl.Mode.Manual);
+            cameraModeNanos = System.nanoTime();
+            cameraSettingsStep = 1;
+            return;
+        }
+        if (System.nanoTime() - cameraModeNanos < 50_000_000L) return;
+        exposure.setExposure(EXPOSURE_MS, TimeUnit.MILLISECONDS);
+        GainControl gain = portal.getCameraControl(GainControl.class);
+        if (gain != null && GAIN >= 0) gain.setGain(GAIN);
+        cameraSettingsStep = 2;
     }
 
     /**

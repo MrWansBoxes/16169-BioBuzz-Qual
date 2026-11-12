@@ -8,6 +8,7 @@ import com.pedropathing.tuning.autotune.Tuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.ForesightTuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.MecanumTuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.PinpointTuner;
+import org.firstinspires.ftc.teamcode.pedro.procedures.Tests;
 
 /** Run in this order; paste each tuner's output into {@link Constants} before running the next. */
 public class Tuning {
@@ -26,5 +27,17 @@ public class Tuning {
         return new ForesightTuner(
                 h -> new PinpointLocalizer(h, Constants.localizerConfig),
                 h -> new Mecanum(h, Constants.drivetrainConfig));
+    }
+
+    /**
+     * Localization and driving checks. The hold / line / curve tests also need the path-following algorithm:
+     * once ForesightTuner has run, replace {@code null} with a supplier of that Foresight algorithm.
+     */
+    @Tuner
+    public static Procedure tests() {
+        return new Tests(
+                h -> new Mecanum(h, Constants.drivetrainConfig),
+                h -> new PinpointLocalizer(h, Constants.localizerConfig),
+                null);
     }
 }

@@ -49,9 +49,9 @@ public final class IntakeConstants {
     /** How long to feed for "dump everything" shots (no flywheel recovery between balls). */
     public static double FEED_ALL_SEC = 1.0;
 
-    // ---------------- Dropdown (two Axon Minis winding string spools; design not final) ----------------
+    // ---------------- Dropdown (two Axon Minis at the front corners driving the bars directly) ----------------
     // Lowers an intake to grab POLLEN from the FLOWERS. Must start STOWED (inside the 18 in. starting size).
-    // The two spools are mirrored, so each servo has its own positions.
+    // The two servos face each other (mirrored), so each has its own positions.
     public static String DROPDOWN_LEFT_NAME = "dropdownLeft";
     public static String DROPDOWN_RIGHT_NAME = "dropdownRight";
     public static double DROPDOWN_LEFT_STOWED = 0.2;

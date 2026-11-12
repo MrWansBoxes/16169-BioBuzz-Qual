@@ -8,7 +8,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.hardware.AxonServo;
 
 /**
- * The dropdown that reaches POLLEN on the FLOWERS, lowered and raised by two Axon Minis winding string spools.
+ * The dropdown that reaches POLLEN on the FLOWERS, lowered and raised by two Axon Minis at the front corners that
+ * drive the dropdown bars directly (CAD 2026-11-12).
  * Like {@link Gate}, there is no feedback, so "down"/"up" are estimated from
  * {@link IntakeConstants#DROPDOWN_MOVE_SEC}.
  * Stows when constructed so the robot starts inside its starting size.
