@@ -42,9 +42,10 @@ public class Constants {
     });
 
     public static Follower create(HardwareMap h) {
-        // Once ForesightTuner has run:
-        // return new Follower(new PinpointLocalizer(h, localizerConfig), new Mecanum(h, drivetrainConfig),
-        //         <Foresight algorithm from ForesightTuner>);
+        // Once ForesightTuner has run. Keep the CorrectedLocalizer wrapper: it lets the turret camera fix odometry
+        // drift in the Pedro pose (without it the camera correction is only used for aiming):
+        // return new Follower(new CorrectedLocalizer(new PinpointLocalizer(h, localizerConfig)),
+        //         new Mecanum(h, drivetrainConfig), <Foresight algorithm from ForesightTuner>);
         return null;
     }
 }

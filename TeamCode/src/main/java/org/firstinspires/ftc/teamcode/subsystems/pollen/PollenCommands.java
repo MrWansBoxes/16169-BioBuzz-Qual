@@ -10,7 +10,6 @@ import com.pedropathing.ivy.groups.Groups;
 import com.pedropathing.ivy.pedro.PedroCommands;
 import com.pedropathing.math.Pose;
 
-import org.firstinspires.ftc.teamcode.subsystems.intake.Gate;
 import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.intake.IntakeCommands;
 
@@ -24,7 +23,7 @@ public final class PollenCommands {
      * {@link PollenConstants#PICKUP_TIMEOUT_MS} runs out. Does nothing if no POLLEN is visible.
      * The intake keeps running afterwards; stop it or start shooting next.
      */
-    public static Command collectNearest(Follower follower, PollenTracker pollen, Intake intake, Gate gate) {
+    public static Command collectNearest(Follower follower, PollenTracker pollen, Intake intake) {
         return Commands.lazy(() -> {
             PollenTracker.Sighting target = pollen.nearest();
             if (target == null) return Command.NOOP;
@@ -37,7 +36,7 @@ public final class PollenCommands {
                     heading);
             return Groups.race(
                     Groups.sequential(
-                            IntakeCommands.intake(intake, gate),
+                            IntakeCommands.intake(intake),
                             PedroCommands.follow(follower, line(start, end).constant(heading))),
                     Commands.waitMs(PICKUP_TIMEOUT_MS));
         });

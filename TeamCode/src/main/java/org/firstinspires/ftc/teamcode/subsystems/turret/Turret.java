@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.hardware.AxonServo;
+import org.firstinspires.ftc.teamcode.pedro.CorrectedLocalizer;
 
 import java.util.function.Supplier;
 
@@ -25,6 +26,7 @@ import java.util.function.Supplier;
  *     ahead, which cancels most of the lag when the robot drives or spins,
  *  5. picks the reachable equivalent of that angle inside the travel limits and writes both servos,
  *  6. tilts the camera so the CELL it is aiming at stays in view.
+ * Then {@link #correctPose} (called by {@code Robot}) moves the camera's odometry correction into the Pedro pose.
  *
  * This object is also the Ivy requirement for turret commands (see {@link TurretCommands}).
  */
@@ -49,6 +51,7 @@ public class Turret {
     private boolean reachable = true;
     private double targetDistance = Double.NaN;
     private long lastNanos = 0;
+    private double lastDt = 0;
 
     public Turret(HardwareMap hardwareMap, Supplier<Pose> poseSupplier, HiveTracker tracker) {
         this.servoA = new AxonServo(hardwareMap, SERVO_A_NAME, FEEDBACK_NAME);
@@ -63,6 +66,7 @@ public class Turret {
         long now = System.nanoTime();
         double dt = lastNanos == 0 ? 0 : (now - lastNanos) / 1e9;
         lastNanos = now;
+        lastDt = dt;
 
         double maxStep = Math.toRadians(SERVO_MAX_DEG_PER_SEC) * dt;
         estimatedRad += Range.clip(commandedRad - estimatedRad, -maxStep, maxStep);
@@ -85,6 +89,21 @@ public class Turret {
         } else {
             tilt.setPitch(Math.toRadians(DEFAULT_PITCH_DEG));
         }
+    }
+
+    /**
+     * Moves part of the camera's odometry correction into the Pedro pose (at most
+     * {@link TurretConstants#POSE_CORRECTION_IN_PER_SEC}), so paths use it too, not just the aim. Call right after
+     * {@link #update()}. Returns the field shift {dx, dy} applied this loop, or null if none; anything else that
+     * keeps field positions from earlier poses (the POLLEN tracker) should shift by the same amount.
+     */
+    public double[] correctPose(CorrectedLocalizer localizer) {
+        // Cap dt so a stalled loop can't turn into one big jump.
+        double[] shift = tracker.takePoseCorrection(POSE_CORRECTION_IN_PER_SEC * Math.min(lastDt, 0.1));
+        if (shift == null) return null;
+        localizer.shift(shift[0], shift[1]);
+        history.shift(shift[0], shift[1]);
+        return shift;
     }
 
     private double trackingAngle(Pose pose) {
@@ -195,7 +214,7 @@ public class Turret {
         telemetry.addData("Trim (deg)", "%.1f", trimDegrees());
         telemetry.addData("Raised CELL", "%s (camera confirmed: %b)", tracker.raisedCell(), tracker.hasSeenHive());
         telemetry.addData("Aim point", "(%.1f, %.1f)  dist %.1f", aim[0], aim[1], targetDistance);
-        telemetry.addData("Camera correction", "(%.1f, %.1f)", corr[0], corr[1]);
+        telemetry.addData("Camera correction (not yet in pose)", "(%.1f, %.1f)", corr[0], corr[1]);
         telemetry.addData("Last sighting", "%s  h=%.1f in  %d%% tags  %.1fs ago",
                 tracker.lastSeenCell(), tracker.lastSeenHeight(), tracker.lastPercentFound(), tracker.secondsSinceSeen());
         telemetry.addData("Camera", tracker.cameraState());

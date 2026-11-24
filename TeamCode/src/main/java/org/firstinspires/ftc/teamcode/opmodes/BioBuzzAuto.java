@@ -47,8 +47,7 @@ public abstract class BioBuzzAuto extends OpMode {
     /** Partly inside the LOADING ZONE counts as PARK. */
     public static double PARK_X = 12, PARK_Y = 108, PARK_HEADING = 0;
 
-    public static int PRELOAD_COUNT = 4;
-    /** Give up on shooting after this long so the robot still parks. */
+    /** Give up on shooting after this long so the robot still parks (waiting for aim and speed included). */
     public static double SHOOT_TIMEOUT_MS = 8000;
 
     private final PoseFactory poseFactory = PoseFactory.degrees();
@@ -70,8 +69,7 @@ public abstract class BioBuzzAuto extends OpMode {
                 // Spin the flywheel up for the current distance while driving.
                 deadline(follow(follower, startToShoot()),
                         FlywheelCommands.spinForTarget(robot.flywheel, robot.turret)),
-                race(FlywheelCommands.shoot(robot.flywheel, robot.turret,
-                                IntakeCommands.feedEach(robot.intake, robot.gate, PRELOAD_COUNT, robot::readyToShoot)),
+                race(FlywheelCommands.shoot(robot.flywheel, robot.turret, IntakeCommands.feedAll(robot.intake)),
                         Commands.waitMs(SHOOT_TIMEOUT_MS)),
                 FlywheelCommands.stop(robot.flywheel),
                 // TODO: collect and shoot more POLLEN here once the paths are drawn in the Pedro visualizer:
@@ -96,7 +94,7 @@ public abstract class BioBuzzAuto extends OpMode {
         follower.update();
 
         // Built in init so the turret camera is already streaming at the start.
-        robot = new Robot(hardwareMap, alliance, follower::pose);
+        robot = new Robot(hardwareMap, alliance, follower);
         MatchState.saveFromAuto(follower.pose(), alliance, robot.tracker);
     }
 

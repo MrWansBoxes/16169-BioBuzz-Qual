@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.opmodes;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
+import com.pedropathing.ivy.commands.Commands;
+import com.pedropathing.ivy.groups.Groups;
 import com.pedropathing.math.Pose;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -10,7 +12,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Alliance;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
-import org.firstinspires.ftc.teamcode.subsystems.intake.Gate;
+import org.firstinspires.ftc.teamcode.pedro.CorrectedLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.intake.IntakeCommands;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Flywheel;
@@ -21,15 +23,16 @@ import org.firstinspires.ftc.teamcode.subsystems.turret.TurretCommands;
 import java.util.function.Supplier;
 
 /**
- * Bring-up OpMode for the turret, flywheel, intake and gate.
+ * Bring-up OpMode for the turret, flywheel and intake.
  *
  * Init: X = blue, B = red, dpad up/down = which CELL starts raised.
  * Run:  A = track, Y = hold forward, bumpers = trim -/+ 1 degree.
  *       Hold right trigger = flywheel at table speed for the current distance.
  *       Dpad up/down = manual RPM offset +/- 50 on top of the table (to find the right RPM for each distance;
  *       record the "Distance" and "Flywheel target" telemetry into FlywheelConstants), dpad left = reset offset.
- *       Hold left trigger = intake, hold B = eject.
- *       X = shoot one ball once the flywheel is ready, dpad right = feed everything immediately.
+ *       Hold left trigger = intake (transfer off), hold B = eject.
+ *       X = shoot everything once the flywheel is ready, dpad right = feed everything immediately.
+ *       Both run the two intake motors for FEED_ALL_SEC.
  *
  * Until Pedro is tuned ({@link Constants#create} returns null) the robot pose is fixed at {@link #START_POSE},
  * so put the robot there and leave it still; the turret will still follow the HIVE using the camera correction.
@@ -45,7 +48,6 @@ public class TurretTrackingTest extends OpMode {
     private Turret turret;
     private Flywheel flywheel;
     private Intake intake;
-    private Gate gate;
     private Command feeding = Command.NOOP;
     private double rpmOffset = 0;
     private boolean lastLeftBumper, lastRightBumper, lastDpadUp, lastDpadDown, lastX, lastDpadRight;
@@ -58,7 +60,6 @@ public class TurretTrackingTest extends OpMode {
         }
         flywheel = new Flywheel(hardwareMap);
         intake = new Intake(hardwareMap);
-        gate = new Gate(hardwareMap);
         follower = Constants.create(hardwareMap);
         if (follower != null) follower.setPose(START_POSE);
     }
@@ -111,23 +112,26 @@ public class TurretTrackingTest extends OpMode {
         lastDpadDown = gamepad1.dpad_down;
 
         if (gamepad1.x && !lastX) {
-            feeding = IntakeCommands.feedEach(intake, gate, 1, flywheel::isReady);
+            feeding = Groups.sequential(Commands.waitUntil(flywheel::isReady), IntakeCommands.feedAll(intake));
             feeding.schedule();
         }
         if (gamepad1.dpad_right && !lastDpadRight) {
-            feeding = IntakeCommands.feedAll(intake, gate);
+            feeding = IntakeCommands.feedAll(intake);
             feeding.schedule();
         }
         lastX = gamepad1.x;
         lastDpadRight = gamepad1.dpad_right;
         if (!feeding.isScheduled()) {
-            if (gamepad1.left_trigger > 0.5) IntakeCommands.intake(intake, gate).schedule();
+            if (gamepad1.left_trigger > 0.5) IntakeCommands.intake(intake).schedule();
             else if (gamepad1.b) IntakeCommands.eject(intake).schedule();
             else if (intake.mode() != Intake.Mode.STOP) IntakeCommands.stop(intake).schedule();
         }
 
         Scheduler.execute();
         turret.update();
+        if (follower != null && follower.localizer instanceof CorrectedLocalizer) {
+            turret.correctPose((CorrectedLocalizer) follower.localizer);
+        }
         if (gamepad1.right_trigger > 0.5) {
             flywheel.setTargetRpm(Flywheel.rpmForDistance(turret.targetDistance()) + rpmOffset);
         } else {
@@ -137,18 +141,20 @@ public class TurretTrackingTest extends OpMode {
         intake.update();
 
         if (follower != null) telemetry.addData("Pose", follower.pose());
+        if (follower != null && follower.localizer instanceof CorrectedLocalizer) {
+            double[] offset = ((CorrectedLocalizer) follower.localizer).offset();
+            telemetry.addData("Pose correction applied", "(%.1f, %.1f) in", offset[0], offset[1]);
+        }
         telemetry.addData("Distance (in) / RPM offset", "%.1f / %+.0f", turret.targetDistance(), rpmOffset);
         turret.addTelemetry(telemetry);
         flywheel.addTelemetry(telemetry);
         intake.addTelemetry(telemetry);
-        gate.addTelemetry(telemetry);
     }
 
     @Override
     public void stop() {
         if (flywheel != null) flywheel.stop();
         if (intake != null) intake.stop();
-        if (gate != null) gate.close();
         if (turret != null) turret.tracker().close();
         Scheduler.reset();
     }

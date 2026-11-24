@@ -154,6 +154,19 @@ public final class TurretConstants {
     /** ...unless this many outliers in a row agree (e.g. odometry got bumped), then snap to it. */
     public static int OUTLIER_FRAMES_TO_RESET = 4;
 
+    // ---------------- Camera correction -> Pedro pose ----------------
+    // The filtered correction is moved into the Pedro pose a little at a time, so paths (not only the turret's
+    // aim) use it. Needs CorrectedLocalizer in Constants.create(); without it the correction only moves the aim.
+    /** false = use the correction for aiming only and never touch the Pedro pose. */
+    public static boolean CORRECT_POSE = true;
+    /** Fastest the camera may move the Pedro pose, so a correction never makes a path jerk. */
+    public static double POSE_CORRECTION_IN_PER_SEC = 6.0;
+    /**
+     * A correction bigger than this is used for aiming but never moved into the pose. Real drift or a bump is
+     * smaller; a bigger one more likely means a wrong field constant (e.g. FAR_WALL_DIRECTION_DEG).
+     */
+    public static double MAX_POSE_CORRECTION_IN = 12.0;
+
     // ---------------- Aiming ----------------
     /** Turret is "on target" when the estimated angle is within this of the desired angle. */
     public static double ON_TARGET_TOLERANCE_DEG = 2.0;

@@ -31,7 +31,7 @@ public final class FlywheelCommands {
 
     /**
      * Aim and spin up together, wait until both the turret and the flywheel are ready, then run {@code feed}
-     * (e.g. open the gate). The flywheel keeps tracking distance while feeding and idles afterwards.
+     * (e.g. {@code IntakeCommands.feedAll}). The flywheel keeps tracking distance while feeding and idles afterwards.
      */
     public static Command shoot(Flywheel flywheel, Turret turret, Command feed) {
         return Groups.deadline(

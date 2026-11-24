@@ -69,9 +69,6 @@ public class MotorServoTest extends OpMode {
         motor(FlywheelConstants.MOTOR_B_NAME, direction(FlywheelConstants.MOTOR_B_REVERSED),
                 "A = shoot direction, B = reverse");
 
-        servos(IntakeConstants.GATE_SERVO_NAME, "A = open, B = close", 0,
-                move(IntakeConstants.GATE_SERVO_NAME, IntakeConstants.GATE_CLOSED, IntakeConstants.GATE_OPEN));
-
         double tiltStart = (TurretConstants.DEFAULT_PITCH_DEG - TurretConstants.MIN_PITCH_DEG)
                 / (TurretConstants.MAX_PITCH_DEG - TurretConstants.MIN_PITCH_DEG);
         servos(TurretConstants.TILT_SERVO_NAME, "A = up, B = down", tiltStart,

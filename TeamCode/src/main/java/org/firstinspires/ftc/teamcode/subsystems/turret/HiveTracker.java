@@ -35,7 +35,8 @@ import java.util.concurrent.TimeUnit;
  *    because they tip), so instead we measure the CELL relative to the robot and compare it with where
  *    odometry says it should be. That difference ({@link #correctionX}/{@link #correctionY}) is mostly
  *    odometry drift; it is low-pass filtered and added to the aim point, and it keeps working after the
- *    camera loses sight of the HIVE.
+ *    camera loses sight of the HIVE. {@code Turret.correctPose} then moves it into the Pedro pose a little at a
+ *    time ({@link #takePoseCorrection}), so paths use it too; the aim point doesn't move while that happens.
  *  - A sighted CELL's measured height tells us whether it is raised (~59 in.) or lowered (~44 in.). Seeing
  *    either of our CELLs is enough to know which one is raised.
  */
@@ -352,8 +353,27 @@ public class HiveTracker {
     }
 
     /**
-     * Filtered (measured - expected) CELL position. Odometry error is roughly the negative of this, so it
-     * could also be fed back into the follower's pose if the field turns out to be accurate enough.
+     * Hands part of the correction over to the robot pose: returns the field shift {dx, dy} the pose should get
+     * (at most {@code maxStep} inches) and removes it from the correction, so the aim point stays where it was.
+     * Null if the pose should not move ({@link TurretConstants#CORRECT_POSE} off, nothing measured yet, or a
+     * correction over {@link TurretConstants#MAX_POSE_CORRECTION_IN}).
+     */
+    double[] takePoseCorrection(double maxStep) {
+        if (!CORRECT_POSE || !hasCorrection || maxStep <= 0) return null;
+        double size = Math.hypot(correctionX, correctionY);
+        if (size < 1e-3 || size > MAX_POSE_CORRECTION_IN) return null;
+        double scale = Math.min(1.0, maxStep / size);
+        double stepX = correctionX * scale, stepY = correctionY * scale;
+        correctionX -= stepX;
+        correctionY -= stepY;
+        // A CELL that looks too far +X means odometry reads too far +X, so the pose moves the other way.
+        return new double[]{-stepX, -stepY};
+    }
+
+    /**
+     * Filtered (measured - expected) CELL position that has not been moved into the robot pose yet. With pose
+     * correction on ({@code Turret.correctPose}) this shrinks toward 0 as the pose absorbs it; odometry error is
+     * roughly this plus what the pose has already absorbed.
      */
     public double[] correction() {
         return new double[]{correctionX, correctionY};

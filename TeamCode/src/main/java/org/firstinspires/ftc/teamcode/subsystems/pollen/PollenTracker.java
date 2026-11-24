@@ -116,7 +116,7 @@ public class PollenTracker {
 
     /** A spot on the field where candidates keep appearing (stage 4). */
     private static final class Track {
-        final double anchorX, anchorY;
+        double anchorX, anchorY;
         double x, y;
         int frames = 1;
         long lastSeenNanos;
@@ -183,6 +183,21 @@ public class PollenTracker {
             }
         }
         nearest = best == null ? null : new Sighting(best.x, best.y, pose);
+    }
+
+    /**
+     * The robot pose was just corrected by (dx, dy) (turret camera, {@code Turret.correctPose}): move the stored
+     * poses and the ball tracks with it so frames captured before the correction still line up. Call before
+     * {@link #update}.
+     */
+    public void shiftField(double dx, double dy) {
+        history.shift(dx, dy);
+        for (Track t : tracks) {
+            t.anchorX += dx;
+            t.anchorY += dy;
+            t.x += dx;
+            t.y += dy;
+        }
     }
 
     private void handleFrame(PollenProcessor.Frame frame, long now) {

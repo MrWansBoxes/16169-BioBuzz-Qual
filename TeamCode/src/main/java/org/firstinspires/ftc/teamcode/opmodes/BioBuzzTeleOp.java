@@ -30,7 +30,7 @@ import org.firstinspires.ftc.teamcode.subsystems.turret.TurretCommands;
  *   you first), hold right trigger = POLLEN assist (turns toward the nearest POLLEN the front camera sees and
  *   runs the intake; the left stick still drives). In init: X = blue, B = red, back = ignore auto's saved state.
  * gamepad2 (operator): left trigger = intake, B = eject, hold right trigger = pre-spin flywheel,
- *   right bumper = shoot everything (one ball at a time), left bumper = shoot one, X = cancel shooting,
+ *   right bumper = shoot everything (back to back, once aimed and at speed), X = cancel shooting,
  *   A = turret track, Y = turret forward, dpad left/right = turret trim, dpad up/down = override raised CELL
  *   (up = SCORING / far side, down = AUDIENCE side), left stick button = lower / raise the dropdown.
  */
@@ -38,7 +38,6 @@ import org.firstinspires.ftc.teamcode.subsystems.turret.TurretCommands;
 public class BioBuzzTeleOp extends OpMode {
     /** Driver Station name. The bare @TeleOp uses the class name, so the autos preselect this. */
     public static final String NAME = "BioBuzzTeleOp";
-    public static int BALLS_PER_VOLLEY = 4;
 
     private Follower follower;
     private Robot robot;
@@ -47,7 +46,7 @@ public class BioBuzzTeleOp extends OpMode {
     private double driverForwardHeading;
     private Command shooting = Command.NOOP;
     private boolean pollenAssist;
-    private boolean lastRightBumper, lastLeftBumper, lastDpadLeft, lastDpadRight, lastLeftStick;
+    private boolean lastRightBumper, lastDpadLeft, lastDpadRight, lastLeftStick;
 
     @Override
     public void init() {
@@ -84,7 +83,7 @@ public class BioBuzzTeleOp extends OpMode {
         follower.setPose(startPose);
         follower.update();
 
-        robot = new Robot(hardwareMap, alliance, follower::pose);
+        robot = new Robot(hardwareMap, alliance, follower);
         if (useAutoState && MatchState.raisedCell != null) {
             robot.tracker.restore(MatchState.raisedCell, MatchState.hiveCorrectionX, MatchState.hiveCorrectionY,
                     MatchState.hiveSeenByCamera);
@@ -142,8 +141,7 @@ public class BioBuzzTeleOp extends OpMode {
         if (gamepad2.left_stick_button && !lastLeftStick) robot.dropdown.toggle();
 
         // Shooting
-        if (gamepad2.right_bumper && !lastRightBumper) startShooting(BALLS_PER_VOLLEY);
-        if (gamepad2.left_bumper && !lastLeftBumper) startShooting(1);
+        if (gamepad2.right_bumper && !lastRightBumper) startShooting();
         if (gamepad2.x) shooting.cancel();
 
         if (!shooting.isScheduled()) {
@@ -152,22 +150,20 @@ public class BioBuzzTeleOp extends OpMode {
             } else {
                 robot.flywheel.idle();
             }
-            if (gamepad2.left_trigger > 0.5 || pollenAssist) IntakeCommands.intake(robot.intake, robot.gate).schedule();
+            if (gamepad2.left_trigger > 0.5 || pollenAssist) IntakeCommands.intake(robot.intake).schedule();
             else if (gamepad2.b) IntakeCommands.eject(robot.intake).schedule();
             else if (robot.intake.mode() != Intake.Mode.STOP) IntakeCommands.stop(robot.intake).schedule();
         }
 
         lastRightBumper = gamepad2.right_bumper;
-        lastLeftBumper = gamepad2.left_bumper;
         lastDpadLeft = gamepad2.dpad_left;
         lastDpadRight = gamepad2.dpad_right;
         lastLeftStick = gamepad2.left_stick_button;
     }
 
-    private void startShooting(int balls) {
+    private void startShooting() {
         shooting.cancel();
-        shooting = FlywheelCommands.shoot(robot.flywheel, robot.turret,
-                IntakeCommands.feedEach(robot.intake, robot.gate, balls, robot::readyToShoot));
+        shooting = FlywheelCommands.shoot(robot.flywheel, robot.turret, IntakeCommands.feedAll(robot.intake));
         shooting.schedule();
     }
 

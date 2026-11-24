@@ -22,7 +22,7 @@ public final class TurretCommands {
         return Commands.waitUntil(turret::isOnTarget);
     }
 
-    /** Track, wait until aimed, then run {@code shoot} (e.g. open the gate and feed). */
+    /** Track, wait until aimed, then run {@code shoot} (e.g. feed the balls). */
     public static Command aimThen(Turret turret, Command shoot) {
         return Groups.sequential(track(turret), waitUntilOnTarget(turret), shoot);
     }

@@ -37,6 +37,19 @@ public class PoseHistory {
         size = Math.min(size + 1, buffer.length);
     }
 
+    /**
+     * Move every stored pose by (dx, dy) after the robot pose itself was corrected by that much, so frames captured
+     * before the correction still line up with the new pose.
+     */
+    public void shift(double dx, double dy) {
+        for (int i = 0; i < size; i++) {
+            int k = (head - i + buffer.length) % buffer.length;
+            Sample s = buffer[k];
+            buffer[k] = new Sample(s.nanos, new Pose(s.pose.x() + dx, s.pose.y() + dy, s.pose.heading()),
+                    s.turretRad, s.cameraPitchRad);
+        }
+    }
+
     void clear() {
         head = -1;
         size = 0;
